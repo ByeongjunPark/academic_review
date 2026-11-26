@@ -5,7 +5,7 @@
  */
 const SHEET_ID = '1s5Fd3uCrn7eAKGsN5je2mvLzdtGAkAScyDQcQjJuQkw';
 const FOLDER_ID = '1hJLt-wGSf1TCtn3JJB1G-aIW-laZCisA';
-const PASSWORD = '여기에_비밀번호';  // 실제 비밀번호로 바꿔서 붙여넣기 (저장소에는 올리지 않음)
+// 비밀번호는 구글시트 'Password' 탭의 A1 셀에서 읽음 (코드에 두지 않음)
 const SHEET_NAME = '제출현황';
 const MEMBERS = [
   ['7월', '박병준'], ['7월', '김순님'], ['8월', '문현우'], ['8월', '한지희'],
@@ -24,7 +24,7 @@ function doPost(e) {
   try {
     const req = JSON.parse(e.postData.contents);
     if (!MEMBERS.some(m => m[1] === req.name)) return out({ ok: false, error: '등록된 위원 이름이 아닙니다.' });
-    if (req.pw !== PASSWORD) return out({ ok: false, error: '비밀번호가 올바르지 않습니다.' });
+    if (!req.pw || String(req.pw) !== password_()) return out({ ok: false, error: '비밀번호가 올바르지 않습니다.' });
     if (req.action === 'login') return out(login(req.name));
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
@@ -109,4 +109,12 @@ function submit(req) {
 function setup() {
   sheet_();
   DriveApp.getFolderById(FOLDER_ID).getName();
+}
+
+function password_() {
+  const sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName('Password');
+  if (!sh) throw new Error("시트에 'Password' 탭이 없습니다.");
+  const pw = String(sh.getRange('A1').getDisplayValue()).trim();
+  if (!pw) throw new Error("'Password' 탭 A1 셀이 비어 있습니다.");
+  return pw;
 }
