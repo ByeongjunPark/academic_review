@@ -1,4 +1,4 @@
-// 검토 일지 HWPX 생성 — template/ 의 원본 양식(자문의견서(이름).hwp → HWPX 변환본)에 내용을 채운다.
+﻿// 검토 일지 HWPX 생성 — template/ 의 원본 양식(자문의견서(이름).hwp → HWPX 변환본)에 내용을 채운다.
 (function () {
   const FILES = [
     'mimetype', 'version.xml', 'Contents/header.xml', 'Contents/section0.xml', 'settings.xml',
@@ -17,7 +17,7 @@
     if (cache) return cache;
     const out = {};
     await Promise.all(FILES.map(async f => {
-      const r = await fetch('template/' + f + '?v=2');
+      const r = await fetch('template/' + f + '?v=3');
       if (!r.ok) throw new Error('양식 파일을 불러오지 못했습니다: ' + f);
       out[f] = BINARY.test(f) ? await r.arrayBuffer() : await r.text();
     }));
