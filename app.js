@@ -24,12 +24,12 @@
   function freshState() {
     const reviews = {};
     myIssues().forEach(i => { reviews[i.key] = { date: i.date, start: DEFAULT_START, sections: [blankSection(), blankSection()] }; });
-    return { sosok: '', jikwi: '', reviews };
+    return { sosok: '', jikwi: '', stamp: '', reviews };
   }
   function normalize(data) {
     const s = freshState();
     if (!data) return s;
-    s.sosok = data.sosok || ''; s.jikwi = data.jikwi || '';
+    s.sosok = data.sosok || ''; s.jikwi = data.jikwi || ''; s.stamp = data.stamp || '';
     myIssues().forEach(i => {
       const r = data.reviews && data.reviews[i.key];
       if (!r) return;
@@ -105,11 +105,48 @@
 
   function render() {
     $('#sosok').value = state.sosok; $('#jikwi').value = state.jikwi;
+    showStamp();
     const box = $('#reviews'); box.innerHTML = '';
     myIssues().forEach(issue => box.append(renderReview(issue)));
   }
   $('#sosok').addEventListener('input', e => { state.sosok = e.target.value; e.target.classList.remove('invalid'); saveLocal(); });
   $('#jikwi').addEventListener('input', e => { state.jikwi = e.target.value; e.target.classList.remove('invalid'); saveLocal(); });
+
+  // ---------- 인장 ----------
+  function showStamp() {
+    const has = !!state.stamp;
+    $('#stampImg').hidden = !has; $('#stampEmpty').hidden = has; $('#stampDel').hidden = !has;
+    if (has) $('#stampImg').src = state.stamp;
+    $('#stampBox').classList.remove('invalid');
+  }
+  // 정사각형 PNG로 줄여서 저장 (시트 한 칸에 들어가도록 크기 제한)
+  function shrinkStamp(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let out = '';
+        for (const size of [200, 150, 110]) {
+          const c = document.createElement('canvas'); c.width = c.height = size;
+          const k = Math.min(size / img.naturalWidth, size / img.naturalHeight);
+          const w = img.naturalWidth * k, h = img.naturalHeight * k;
+          c.getContext('2d').drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+          out = c.toDataURL('image/png');
+          if (out.length < 45000) break;
+        }
+        URL.revokeObjectURL(img.src);
+        resolve(out);
+      };
+      img.onerror = () => reject(new Error('이미지를 읽지 못했습니다.'));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  $('#stampFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try { state.stamp = await shrinkStamp(f); showStamp(); saveLocal(); setMsg('인장을 등록했습니다.', true); }
+    catch (err) { setMsg(err.message); }
+  });
+  $('#stampDel').addEventListener('click', () => { state.stamp = ''; showStamp(); saveLocal(); });
 
   function renderReview(issue) {
     const rv = state.reviews[issue.key];
@@ -219,10 +256,11 @@
   $('#submitBtn').addEventListener('click', async () => {
     const reviews = validate();
     if (!reviews) { setMsg('빨간 칸을 채워 주세요. (소속·직위, 각 호마다 소제목 1개 이상 + 활동내용 1개 이상)'); return; }
+    if (!state.stamp && !confirm('인장이 등록되지 않았습니다. 인장 없이 제출할까요?')) { $('#stampBox').classList.add('invalid'); $('#stampBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
     if (!confirm('자문의견서를 제출할까요?\n구글 드라이브에 ' + fileName() + ' 로 저장됩니다.')) return;
     const b = $('#submitBtn'); b.disabled = true; setMsg('한글 파일을 만들고 있습니다…', true);
     try {
-      const bytes = await HWPX.build({ name: me, sosok: state.sosok.trim(), jikwi: state.jikwi.trim(), reviews });
+      const bytes = await HWPX.build({ name: me, sosok: state.sosok.trim(), jikwi: state.jikwi.trim(), stamp: state.stamp, reviews });
       setMsg('드라이브에 저장 중…', true);
       const res = await api({ action: 'submit', name: me, pw, data: state, fileName: fileName(), file: toBase64(bytes) });
       const localUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/hwp+zip' }));

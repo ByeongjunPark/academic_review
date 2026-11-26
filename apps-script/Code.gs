@@ -12,8 +12,8 @@ const FOLDER_ID = '1hJLt-wGSf1TCtn3JJB1G-aIW-laZCisA';
 const SHEET_NAME = '제출현황';
 const MEMBER_SHEET = '위원';
 const ROSTER_SHEET = '집필진 명단';
-const HEADER = ['이름', '집필월', '소속', '직위', '상태', '최종저장', '제출시각', '파일', '데이터(JSON)'];
-const COL = { name: 1, month: 2, sosok: 3, jikwi: 4, state: 5, saved: 6, submitted: 7, file: 8, data: 9 };
+const HEADER = ['이름', '집필월', '소속', '직위', '상태', '최종저장', '제출시각', '파일', '데이터(JSON)', '인장'];
+const COL = { name: 1, month: 2, sosok: 3, jikwi: 4, state: 5, saved: 6, submitted: 7, file: 8, data: 9, stamp: 10 };
 
 function doGet() {
   return out({ ok: true, service: 'academic_review' });
@@ -91,6 +91,7 @@ function sheet_() {
     sh.setFrozenRows(1);
     sh.setColumnWidth(COL.data, 120);
   }
+  if (sh.getRange(1, COL.stamp).getValue() !== '인장') sh.getRange(1, COL.stamp).setValue('인장').setFontWeight('bold');
   return sh;
 }
 
@@ -109,6 +110,7 @@ function login(me, issues) {
   const v = sh.getRange(r, 1, 1, HEADER.length).getValues()[0];
   let data = null;
   try { data = v[COL.data - 1] ? JSON.parse(v[COL.data - 1]) : null; } catch (e) { }
+  if (data) data.stamp = v[COL.stamp - 1] || '';
   const t = d => (d instanceof Date ? d.getTime() : 0);
   return {
     ok: true, name: me.name, month: me.month, issues,
@@ -122,7 +124,11 @@ function save(me, data) {
   const now = new Date();
   sh.getRange(r, COL.sosok, 1, 2).setValues([[data.sosok || '', data.jikwi || '']]);
   sh.getRange(r, COL.saved).setValue(now);
-  sh.getRange(r, COL.data).setValue(JSON.stringify(data));
+  const stamp = String(data.stamp || '');
+  if (stamp.length > 49000) throw new Error('인장 이미지가 너무 큽니다.');
+  const rest = Object.assign({}, data); delete rest.stamp;
+  sh.getRange(r, COL.data).setValue(JSON.stringify(rest));
+  sh.getRange(r, COL.stamp).setValue(stamp);
   if (sh.getRange(r, COL.state).getValue() !== '제출') sh.getRange(r, COL.state).setValue('작성중');
   return { ok: true, savedAt: now.getTime() };
 }

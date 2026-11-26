@@ -67,17 +67,53 @@
   async function build(info) {
     const t = await loadTemplate();
     const zip = new JSZip();
+    const stamp = info.stamp ? await stampBytes(info.stamp) : null;
     const section = t['Contents/section0.xml']
       .replace('@@SOSOK@@', esc(info.sosok))
       .replace('@@JIKWI@@', esc(info.jikwi))
+      .replace('@@STAMP@@', stamp ? stampPic(stamp.px) : '')
       .replace('@@NAME@@', esc(info.name))
       .replace('@@ROWCNT@@', String(info.reviews.length + 2))
       .replace('@@ROWS@@', buildRows(info.reviews));
+    let hpf = t['Contents/content.hpf'];
+    if (stamp) hpf = hpf.replace('</opf:manifest>',
+      '<opf:item id="' + STAMP_ID + '" href="BinData/' + STAMP_ID + '.png" media-type="image/png" isEmbeded="1"/></opf:manifest>');
     for (const f of FILES) {
-      const data = f === 'Contents/section0.xml' ? section : t[f];
+      const data = f === 'Contents/section0.xml' ? section : f === 'Contents/content.hpf' ? hpf : t[f];
       zip.file(f, data, f === 'mimetype' ? { compression: 'STORE' } : { compression: 'DEFLATE' });
     }
+    if (stamp) zip.file('BinData/' + STAMP_ID + '.png', stamp.bytes, { compression: 'DEFLATE' });
     return zip.generateAsync({ type: 'uint8array', mimeType: 'application/hwp+zip' });
+  }
+
+  // ---------- 인장 (10mm × 10mm, 성명 칸 "(인)" 위에 겹쳐 놓음) ----------
+  const STAMP_ID = 'stamp1';
+  const STAMP_SIZE = 2835;          // 10mm (1mm = 283.46 HWPUNIT)
+  const STAMP_X = 49293;            // 용지 왼쪽에서 173.9mm (성명 칸 "(인)" 중심 178.9mm - 5mm)
+  const STAMP_Y = 15080;            // 용지 위에서 53.2mm (성명 칸 중심 58.2mm - 5mm)
+  const u32 = n => (n < 0 ? 4294967296 + n : n);
+
+  async function stampBytes(dataUrl) {
+    const bytes = Uint8Array.from(atob(dataUrl.split(',')[1]), c => c.charCodeAt(0));
+    const img = new Image();
+    await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error('인장 이미지를 읽지 못했습니다.')); img.src = dataUrl; });
+    return { bytes, px: img.naturalWidth || 200 };
+  }
+
+  function stampPic(px) {
+    const org = px * 75;            // 96dpi 기준 원본 크기
+    const sc = (STAMP_SIZE / org).toFixed(6);
+    const half = Math.round(STAMP_SIZE / 2);
+    return `<hp:pic id="1151999001" zOrder="99" numberingType="PICTURE" textWrap="IN_FRONT_OF_TEXT" textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="78199001" reverse="0">` +
+      `<hp:offset x="0" y="0"/><hp:orgSz width="${org}" height="${org}"/><hp:curSz width="${STAMP_SIZE}" height="${STAMP_SIZE}"/>` +
+      `<hp:flip horizontal="0" vertical="0"/><hp:rotationInfo angle="0" centerX="${half}" centerY="${half}" rotateimage="1"/>` +
+      `<hp:renderingInfo><hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/><hc:scaMatrix e1="${sc}" e2="0" e3="0" e4="0" e5="${sc}" e6="0"/><hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/></hp:renderingInfo>` +
+      `<hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${org}" y="0"/><hc:pt2 x="${org}" y="${org}"/><hc:pt3 x="0" y="${org}"/></hp:imgRect>` +
+      `<hp:imgClip left="0" right="${org}" top="0" bottom="${org}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
+      `<hp:imgDim dimwidth="${org}" dimheight="${org}"/><hc:img binaryItemIDRef="${STAMP_ID}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/>` +
+      `<hp:sz width="${STAMP_SIZE}" widthRelTo="ABSOLUTE" height="${STAMP_SIZE}" heightRelTo="ABSOLUTE" protect="0"/>` +
+      `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="0" allowOverlap="1" holdAnchorAndSO="0" vertRelTo="PAPER" horzRelTo="PAPER" vertAlign="TOP" horzAlign="LEFT" vertOffset="${u32(STAMP_Y)}" horzOffset="${STAMP_X}"/>` +
+      `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:shapeComment>인장</hp:shapeComment></hp:pic>`;
   }
 
   window.HWPX = { build, fmtDate, fmtTime };
