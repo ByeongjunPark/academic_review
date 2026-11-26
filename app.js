@@ -214,10 +214,16 @@
     const el = tpl('tplReview');
     el.dataset.key = issue.key;
     el.querySelector('.rv-title').textContent = issue.label;
-    el.querySelector('.rv-meta').textContent = ['집필 ' + writersOf(issue).join('·'), issue.title].filter(Boolean).join(' · ');
+    el.querySelector('.rv-meta').textContent = '집필 ' + writersOf(issue).join('·');
     const sum = el.querySelector('.rv-summary');
-    if (issue.summary.length) issue.summary.forEach(t => { const li = document.createElement('li'); li.textContent = t; sum.append(li); });
-    else sum.remove();
+    const tt = el.querySelector('.rv-issue');
+    if (issue.title) tt.textContent = '「' + issue.title + '」'; else tt.remove();
+    issue.summary.forEach(t => {
+      const li = document.createElement('li'); li.textContent = t;
+      if (/^[(（]/.test(t)) li.className = 'note'; // (아직 원고가 …) 같은 안내 줄
+      sum.append(li);
+    });
+    if (!issue.summary.length) sum.remove();
     const date = el.querySelector('.rv-date'), start = el.querySelector('.rv-start'), end = el.querySelector('.rv-end'), dur = el.querySelector('.rv-dur');
     date.max = MAX_DATE;
     for (let h = 0; h <= 23; h++) start.add(new Option(hh(h), h));
