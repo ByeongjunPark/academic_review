@@ -2,7 +2,7 @@
  * 학술분과 자문의견서 — 백엔드 (Google Apps Script 웹 앱)
  * 내용은 모두 구글시트에서 읽는다 (공개 저장소의 코드에는 이름·키워드·비밀번호를 두지 않음)
  *   - '위원' 탭: A열에 위원 이름 (로그인 허용 명단)
- *   - '집필진 명단' 탭: 1행 제목, A 발간월(예: 7월) / B 제목 / C 핵심 키워드 / D 담당자("홍길동, 김철수")
+   - '집필진 명단' 탭: 1행 제목, A 발간월(예: 7월) / B 제목 / C 세줄요약(셀 안에서 줄바꿈) / D 담당자("홍길동, 김철수")
  *   - 'Password' 탭: A1 셀에 비밀번호
  *   - '제출현황' 탭: 자동 생성 (제출 현황·임시저장 데이터)
  * 구글드라이브 폴더: 제출된 자문의견서(이름).hwpx 저장
@@ -58,7 +58,7 @@ function roster_() {
     .map(r => ({
       month: clean_(r[0]).replace(/호$/, ''),
       title: String(r[1]).trim(),
-      kw: String(r[2]).replace(/\s+/g, ' ').trim(),
+      summary: String(r[2]).split(/\r?\n/).map(s => s.trim()).filter(Boolean), // C열 세줄요약 (셀 안 줄바꿈 단위)
       writers: String(r[3]).split(/[,，、·\/\n]+/).map(clean_).filter(Boolean)
     }))
     .filter(i => /^\d{1,2}월$/.test(i.month));

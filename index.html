@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>학술분과 자문의견서</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 <main id="app">
@@ -65,6 +65,19 @@
       <p>✍️ 각 호마다 <b>▣ 소제목</b>과 그 아래 <b>- 활동내용</b>을 1개 이상 적어 주세요.</p>
     </div>
 
+    <details class="guide card">
+      <summary>✍️ 작성 예시 보기 <span>어떤 걸 검토했다고 쓰면 될까요?</span></summary>
+      <p class="guide-lead">아래 검토 항목 중 실제로 살펴본 것을 골라 <b>▣ 소제목</b>으로 쓰고, 구체적으로 한 일을 <b>- 활동내용</b>으로 적어 주세요. 예시는 참고용이니 검토한 내용에 맞게 바꿔 쓰시면 됩니다.</p>
+      <div class="guide-grid">
+        <div><b>▣ 내용의 정확성 검토</b><span>- 인용된 통계·정책 자료의 수치와 출처 일치 여부 확인</span><span>- 주요 개념 정의의 학술적 타당성 검토</span></div>
+        <div><b>▣ 참고문헌 및 인용 적합성 검토</b><span>- 본문 인용과 참고문헌 목록의 일치 여부 확인</span><span>- 인용 문헌의 신뢰도·최신성 및 표기 양식(APA 등) 점검</span></div>
+        <div><b>▣ 맞춤법 및 표기 검토</b><span>- 맞춤법·띄어쓰기·외래어 표기 오류 확인 및 수정 의견 제시</span><span>- 용어 표기 통일(예: AI·인공지능) 및 비문 수정</span></div>
+        <div><b>▣ 구성 및 논리 흐름 검토</b><span>- 파트 간 내용 연결성과 제언의 논리적 일관성 검토</span><span>- 제목·소제목과 본문 내용의 부합 여부 확인</span></div>
+        <div><b>▣ 표·그림 등 시각자료 검토</b><span>- 표·그림의 번호, 제목, 출처 표기 확인</span><span>- 시각자료와 본문 설명의 일치 여부 및 가독성 점검</span></div>
+        <div><b>▣ 저작권 및 개인정보 검토</b><span>- 이미지·인용 자료의 저작권 및 출처 표기 확인</span><span>- 사례·인터뷰 내용의 개인정보 노출 여부 점검</span></div>
+      </div>
+    </details>
+
     <div id="reviews"></div>
 
     <div class="actions">
@@ -92,6 +105,7 @@
       <span class="rv-meta"></span>
       <span class="rv-done" title="작성 완료">✓ 작성 완료</span>
     </div>
+    <ul class="rv-summary"></ul>
     <div class="rv-when">
       <label>검토일 <input type="date" class="rv-date" max="2026-12-10"></label>
       <label>시작 <select class="rv-start"></select></label>
@@ -127,6 +141,6 @@
 <script src="config.js?v=2"></script>
 <script src="lib/jszip.min.js"></script>
 <script src="hwpx.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

@@ -146,3 +146,22 @@ dialog h3 { margin: 0 0 10px; font-size: 18px; }
 }
 button:focus { outline: none; }
 button:focus-visible { outline: 3px solid rgba(169, 80, 159, .35); outline-offset: 2px; }
+
+/* 세줄요약 */
+.rv-summary { list-style: none; margin: -4px 0 14px; padding: 10px 14px; background: #fbf6fa; border-radius: 12px; font-size: 13.5px; color: #4d4553; }
+.rv-summary li { position: relative; padding-left: 14px; margin: 2px 0; }
+.rv-summary li::before { content: ""; position: absolute; left: 2px; top: .7em; width: 5px; height: 5px; border-radius: 50%; background: var(--purple); }
+
+/* 작성 예시 */
+.guide { padding: 0; }
+.guide summary { cursor: pointer; padding: 16px 22px; font-weight: 700; list-style: none; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.guide summary::-webkit-details-marker { display: none; }
+.guide summary::after { content: "펼치기 ▾"; margin-left: auto; font-size: 12px; color: var(--green); font-weight: 600; }
+.guide[open] summary::after { content: "접기 ▴"; }
+.guide summary span { font-size: 13px; color: var(--muted); font-weight: 500; }
+.guide-lead { margin: 0 22px 14px; font-size: 13.5px; color: #4d4553; }
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 22px 22px; }
+.guide-grid div { background: #faf7fb; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+.guide-grid b { display: block; margin-bottom: 4px; color: var(--green-d); }
+.guide-grid span { display: block; padding-left: 10px; text-indent: -10px; color: #4d4553; }
+@media (max-width: 560px) { .guide-grid { grid-template-columns: 1fr; } }
