@@ -1,22 +1,23 @@
 (function () {
-  // 발간월별 이슈 리포트와 집필진 (집필진 명단.xlsx)
+  // 발간월별 이슈 리포트 (집필진 명단은 구글시트 '위원' 탭 → 로그인 후 서버에서 받음)
   const ISSUES = [
-    { key: '2026-07', label: '7월호',  date: '2026-07-15', writers: ['박병준', '김순님'], kw: '#인지적외주화 #참학력 #인지증강 #학습과정' },
-    { key: '2026-08', label: '8월호',  date: '2026-08-12', writers: ['문현우', '한지희'], kw: '#디지털 웰빙 #디지털기기 적정 활용' },
-    { key: '2026-09', label: '9월호',  date: '2026-09-09', writers: ['홍성진', '김민중'], kw: '#특수교육대상 #이주배경학생' },
-    { key: '2026-10', label: '10월호', date: '2026-10-07', writers: ['김은지', '박수영'], kw: '#과정중심 평가 #AI피드백리터러시 #교사-AI협업' },
-    { key: '2026-11', label: '11월호', date: '2026-11-11', writers: ['최정엽', '구은복'], kw: '#AI 활용 수업 모형 #OECD teaching compass' },
-    { key: '2026-12', label: '12월호', date: '2026-12-02', writers: ['김수현', '김지의'], kw: '#교원 디지털 역량 체계표 #학생 디지털 역량 체계표 #DigComp_3.0' },
-    { key: '2027-01', label: '1월호',  date: '2027-01-06', writers: ['최시경', '김범준'], kw: '지능형 학습 분석학과 맞춤형 환류 체계 동향' }
+    { key: '2026-07', label: '7월호',  date: '2026-07-15', kw: '#인지적외주화 #참학력 #인지증강 #학습과정' },
+    { key: '2026-08', label: '8월호',  date: '2026-08-12', kw: '#디지털 웰빙 #디지털기기 적정 활용' },
+    { key: '2026-09', label: '9월호',  date: '2026-09-09', kw: '#특수교육대상 #이주배경학생' },
+    { key: '2026-10', label: '10월호', date: '2026-10-07', kw: '#과정중심 평가 #AI피드백리터러시 #교사-AI협업' },
+    { key: '2026-11', label: '11월호', date: '2026-11-11', kw: '#AI 활용 수업 모형 #OECD teaching compass' },
+    { key: '2026-12', label: '12월호', date: '2026-12-02', kw: '#교원 디지털 역량 체계표 #학생 디지털 역량 체계표 #DigComp_3.0' },
+    { key: '2027-01', label: '1월호',  date: '2027-01-06', kw: '지능형 학습 분석학과 맞춤형 환류 체계 동향' }
   ];
   const DEFAULT_START = 18;
-  const MEMBERS = ISSUES.flatMap(i => i.writers);
+  let MEMBERS = []; // [{month:'7월', name}]
+  const writersOf = issue => MEMBERS.filter(m => m.month + '호' === issue.label).map(m => m.name);
 
   const $ = s => document.querySelector(s);
-  let me = null, pw = '', state = null, saveTimer = null;
+  let me = null, myMonth = '', pw = '', state = null, saveTimer = null;
 
   // ---------- 상태 ----------
-  const myIssues = () => ISSUES.filter(i => !i.writers.includes(me));
+  const myIssues = () => ISSUES.filter(i => i.label !== myMonth + '호');
   const blankSection = () => ({ title: '', items: [''] });
   function freshState() {
     const reviews = {};
@@ -57,16 +58,15 @@
 
   // ---------- 로그인 ----------
   const sel = $('#loginName');
-  MEMBERS.forEach(n => sel.add(new Option(n, n)));
   $('#loginForm').addEventListener('submit', async e => {
     e.preventDefault();
     const btn = e.submitter || $('#loginForm button');
     const msg = $('#loginMsg'); msg.className = 'msg'; msg.textContent = '';
     btn.disabled = true;
     try {
-      const name = sel.value, pass = $('#loginPw').value;
+      const name = sel.value.replace(/\s+/g, ''), pass = $('#loginPw').value;
       const res = await api({ action: 'login', name, pw: pass });
-      me = name; pw = pass;
+      me = res.name; pw = pass; myMonth = res.month; MEMBERS = res.members || [];
       sessionStorage.setItem('gne_session', JSON.stringify({ me, pw }));
       enter(res);
     } catch (err) { msg.textContent = err.message; }
@@ -81,8 +81,7 @@
     state = normalize(local && local.t > serverT ? local.data : (res.data || (local && local.data)));
     $('#login').hidden = true; $('#editor').hidden = false;
     $('#whoName').textContent = '(' + me + ')';
-    const own = ISSUES.find(i => i.writers.includes(me));
-    $('#whoInfo').textContent = own.label + ' 집필 · 나머지 ' + myIssues().length + '개 호 검토';
+    $('#whoInfo').textContent = myMonth + '호' + ' 집필 · 나머지 ' + myIssues().length + '개 호 검토';
     showStatus(res.submittedAt, res.fileUrl);
     render();
   }
@@ -115,7 +114,7 @@
     const el = tpl('tplReview');
     el.dataset.key = issue.key;
     el.querySelector('.rv-title').textContent = issue.label;
-    el.querySelector('.rv-meta').textContent = '집필 ' + issue.writers.join('·') + ' · ' + issue.kw;
+    el.querySelector('.rv-meta').textContent = '집필 ' + writersOf(issue).join('·') + ' · ' + issue.kw;
     const date = el.querySelector('.rv-date'), start = el.querySelector('.rv-start');
     for (let h = 0; h <= 21; h++) start.add(new Option(HWPX.fmtTime(h).slice(1, -1), h));
     date.value = rv.date; start.value = rv.start;
@@ -235,7 +234,7 @@
   // 새로고침 시 세션 유지
   try {
     const ss = JSON.parse(sessionStorage.getItem('gne_session') || 'null');
-    if (ss && MEMBERS.includes(ss.me)) {
+    if (ss && ss.me) {
       sel.value = ss.me; $('#loginPw').value = ss.pw;
       $('#loginForm').requestSubmit();
     }

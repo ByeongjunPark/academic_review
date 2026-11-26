@@ -17,7 +17,7 @@
     if (cache) return cache;
     const out = {};
     await Promise.all(FILES.map(async f => {
-      const r = await fetch('template/' + f + '?v=1');
+      const r = await fetch('template/' + f + '?v=2');
       if (!r.ok) throw new Error('양식 파일을 불러오지 못했습니다: ' + f);
       out[f] = BINARY.test(f) ? await r.arrayBuffer() : await r.text();
     }));
