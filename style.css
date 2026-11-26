@@ -75,3 +75,5 @@ label.btn-file:hover { border-color: #888; }
 .make-stamp:hover { color: #000; border-color: #000; }
 .stamp-hint { margin: 8px 0 0 42px; font-size: 12px; color: #888; }
 label.btn-file input, [hidden] { display: none !important; }
+.notice { margin-top: 18px; padding: 12px 14px; background: #fff; border: 1px solid #e3e3df; border-left: 3px solid #222; border-radius: 6px; font-size: 13px; color: #333; }
+.notice a { color: #222; font-weight: 600; }
