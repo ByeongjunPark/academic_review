@@ -17,7 +17,7 @@
     if (cache) return cache;
     const out = {};
     await Promise.all(FILES.map(async f => {
-      const r = await fetch('template/' + f + '?v=3');
+      const r = await fetch('template/' + f + '?v=4');
       if (!r.ok) throw new Error('양식 파일을 불러오지 못했습니다: ' + f);
       out[f] = BINARY.test(f) ? await r.arrayBuffer() : await r.text();
     }));
@@ -45,15 +45,15 @@
     return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}.(${wd})`;
   }
   const hh = h => String(h).padStart(2, '0') + ':00';
-  const fmtTime = start => `(${hh(start)}~${hh(start + 3)})`;
+  const fmtTime = (start, end) => `(${hh(start)}~${hh(end == null ? start + 3 : end)})`;
 
-  // reviews: [{label:'8월호', date:'2026-08-12', start:18, sections:[{title, items:[...]}]}]
+  // reviews: [{label:'8월호', date:'2026-08-12', start:18, end:21, sections:[{title, items:[...]}]}]
   function buildRows(reviews) {
     return reviews.map((rv, i) => {
       const row = i + 2;
       const last = i === reviews.length - 1;
       const bf = i === 0 ? [23, 24] : last ? [27, 28] : [25, 26];
-      const dateParas = para(PARA_DATE, rv.label) + para(PARA_DATE, fmtDate(rv.date)) + para(PARA_DATE, fmtTime(rv.start));
+      const dateParas = para(PARA_DATE, rv.label) + para(PARA_DATE, fmtDate(rv.date)) + para(PARA_DATE, fmtTime(rv.start, rv.end));
       let n = 0, body = '';
       rv.sections.forEach(sec => {
         body += para(PARA_HEAD, ' ▣ ' + oneLine(sec.title)); n++;
